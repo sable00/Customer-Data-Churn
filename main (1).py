@@ -1,16 +1,3 @@
-"""
-Comprehensive Telecom Customer Churn Prediction using Gradient Boosting
-========================================================================
-
-This script implements a complete machine learning pipeline for predicting customer churn
-in the telecom industry using Gradient Boosting Classifier. It includes data preprocessing,
-exploratory data analysis, model training, hyperparameter optimization, and evaluation.
-
-Author: AI Assistant
-Date: August 25, 2025
-"""
-
-# Import required libraries
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -24,10 +11,9 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import os
 
-# Suppress warnings for cleaner output
+
 warnings.filterwarnings('ignore')
 
-# Set style for visualizations
 plt.style.use('default')  # Use default style since seaborn-v0_8 might not be available
 sns.set_palette("husl")
 
@@ -69,16 +55,16 @@ class TelecomChurnPredictor:
             self.data_path = data_path
         
         try:
-            # Check if file exists
+           
             if self.data_path and os.path.exists(self.data_path):
                 print(f"Loading data from: {self.data_path}")
                 self.df = pd.read_csv(self.data_path)
             else:
-                # Create sample dataset structure for demonstration
+               
                 print("Dataset file not found. Creating sample dataset structure...")
                 print("Note: In production, ensure the Telco Customer Churn dataset is available.")
                 
-                # Create a sample dataset with the expected structure
+                
                 np.random.seed(42)
                 n_samples = 1000
                 
@@ -106,7 +92,7 @@ class TelecomChurnPredictor:
                     'Churn': np.random.choice(['Yes', 'No'], n_samples, p=[0.27, 0.73])
                 }
                 
-                # Calculate TotalCharges (some with missing values represented as empty strings)
+                
                 for i in range(n_samples):
                     if np.random.random() < 0.05:  # 5% missing values
                         sample_data['TotalCharges'][i] = ''
@@ -119,28 +105,23 @@ class TelecomChurnPredictor:
             print(f"Dataset shape: {self.df.shape}")
             print(f"Columns: {list(self.df.columns)}")
             
-            # Display basic info about the dataset
             print("\nDataset Info:")
             print(self.df.info())
             
-            # Handle missing values in TotalCharges
             print("\nHandling missing values...")
             missing_before = self.df['TotalCharges'].isnull().sum()
             empty_strings = (self.df['TotalCharges'] == '').sum()
             print(f"Missing values in TotalCharges: {missing_before}")
             print(f"Empty strings in TotalCharges: {empty_strings}")
             
-            # Convert TotalCharges to numeric, handling empty strings
             self.df['TotalCharges'] = pd.to_numeric(self.df['TotalCharges'], errors='coerce')
             
-            # Fill missing TotalCharges with median
             median_total_charges = self.df['TotalCharges'].median()
             self.df['TotalCharges'].fillna(median_total_charges, inplace=True)
             
             missing_after = self.df['TotalCharges'].isnull().sum()
             print(f"Missing values after cleaning: {missing_after}")
             
-            # Convert Churn target variable to binary
             self.df['Churn'] = self.df['Churn'].map({'Yes': 1, 'No': 0})
             
             print("\nData preprocessing completed successfully!")
@@ -157,23 +138,20 @@ class TelecomChurnPredictor:
         print("STEP 2: EXPLORATORY DATA ANALYSIS")
         print("=" * 60)
         
-        # Basic statistics
         print("Dataset Overview:")
         print(f"Total customers: {len(self.df)}")
         print(f"Churned customers: {self.df['Churn'].sum()}")
         print(f"Churn rate: {self.df['Churn'].mean():.2%}")
         
-        # Create subplots for EDA
+        
         fig, axes = plt.subplots(2, 3, figsize=(18, 12))
         fig.suptitle('Telecom Customer Churn - Exploratory Data Analysis', fontsize=16, fontweight='bold')
         
-        # 1. Churn distribution
         churn_counts = self.df['Churn'].value_counts()
         axes[0, 0].pie(churn_counts.values, labels=['No Churn', 'Churn'], autopct='%1.1f%%', 
                        colors=['lightblue', 'lightcoral'])
         axes[0, 0].set_title('Churn Distribution')
         
-        # 2. Contract vs Churn
         contract_churn = pd.crosstab(self.df['Contract'], self.df['Churn'], normalize='index')
         contract_churn.plot(kind='bar', ax=axes[0, 1], color=['lightblue', 'lightcoral'])
         axes[0, 1].set_title('Churn Rate by Contract Type')
@@ -182,17 +160,14 @@ class TelecomChurnPredictor:
         axes[0, 1].legend(['No Churn', 'Churn'])
         axes[0, 1].tick_params(axis='x', rotation=45)
         
-        # 3. Monthly Charges vs Churn (violin plot)
         sns.violinplot(data=self.df, x='Churn', y='MonthlyCharges', ax=axes[0, 2])
         axes[0, 2].set_title('Monthly Charges Distribution by Churn')
         axes[0, 2].set_xticklabels(['No Churn', 'Churn'])
         
-        # 4. Tenure vs Churn (violin plot)
         sns.violinplot(data=self.df, x='Churn', y='tenure', ax=axes[1, 0])
         axes[1, 0].set_title('Tenure Distribution by Churn')
         axes[1, 0].set_xticklabels(['No Churn', 'Churn'])
         
-        # 5. Internet Service vs Churn
         internet_churn = pd.crosstab(self.df['InternetService'], self.df['Churn'], normalize='index')
         internet_churn.plot(kind='bar', ax=axes[1, 1], color=['lightblue', 'lightcoral'])
         axes[1, 1].set_title('Churn Rate by Internet Service')
@@ -201,7 +176,6 @@ class TelecomChurnPredictor:
         axes[1, 1].legend(['No Churn', 'Churn'])
         axes[1, 1].tick_params(axis='x', rotation=45)
         
-        # 6. Payment Method vs Churn
         payment_churn = pd.crosstab(self.df['PaymentMethod'], self.df['Churn'], normalize='index')
         payment_churn.plot(kind='bar', ax=axes[1, 2], color=['lightblue', 'lightcoral'])
         axes[1, 2].set_title('Churn Rate by Payment Method')
@@ -215,22 +189,18 @@ class TelecomChurnPredictor:
         plt.close()  # Close figure to free memory
         print("EDA visualizations saved to 'eda_analysis.png'")
         
-        # Additional correlation analysis
         print("\nKey Insights from EDA:")
         
-        # Churn rate by contract
         contract_analysis = self.df.groupby('Contract')['Churn'].mean().sort_values(ascending=False)
         print(f"\nChurn rate by Contract:")
         for contract, rate in contract_analysis.items():
             print(f"  {contract}: {rate:.2%}")
         
-        # Churn rate by internet service
         internet_analysis = self.df.groupby('InternetService')['Churn'].mean().sort_values(ascending=False)
         print(f"\nChurn rate by Internet Service:")
         for service, rate in internet_analysis.items():
             print(f"  {service}: {rate:.2%}")
         
-        # Average monthly charges by churn
         charges_analysis = self.df.groupby('Churn')['MonthlyCharges'].mean()
         print(f"\nAverage Monthly Charges:")
         print(f"  No Churn: ${charges_analysis[0]:.2f}")
@@ -244,35 +214,28 @@ class TelecomChurnPredictor:
         print("STEP 3: FEATURE PREPARATION")
         print("=" * 60)
         
-        # Create a copy of the dataframe for feature engineering
         df_features = self.df.copy()
         
-        # Remove customerID as it's not predictive
         if 'customerID' in df_features.columns:
             df_features = df_features.drop('customerID', axis=1)
         
-        # Separate target variable
         y = df_features['Churn']
         X = df_features.drop('Churn', axis=1)
         
-        # Identify categorical and numerical columns
         categorical_cols = X.select_dtypes(include=['object']).columns.tolist()
         numerical_cols = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
         
         print(f"Categorical columns: {categorical_cols}")
         print(f"Numerical columns: {numerical_cols}")
         
-        # Apply one-hot encoding to categorical variables
         print("Applying one-hot encoding to categorical variables...")
         X_encoded = pd.get_dummies(X, columns=categorical_cols, drop_first=True)
         
         print(f"Features before encoding: {X.shape[1]}")
         print(f"Features after encoding: {X_encoded.shape[1]}")
         
-        # Store feature names for later use
         self.feature_names = X_encoded.columns.tolist()
         
-        # Split the data into training and testing sets
         print("Splitting data into training and testing sets...")
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             X_encoded, y, test_size=0.2, random_state=42, stratify=y
@@ -291,19 +254,15 @@ class TelecomChurnPredictor:
         print("STEP 4: INITIAL MODEL TRAINING")
         print("=" * 60)
         
-        # Initialize and train the model
         print("Training Gradient Boosting Classifier...")
         self.model = GradientBoostingClassifier(random_state=42)
         self.model.fit(self.X_train, self.y_train)
         
-        # Make predictions
         y_pred = self.model.predict(self.X_test)
         
-        # Calculate accuracy
         accuracy = accuracy_score(self.y_test, y_pred)
         print(f"Initial model accuracy: {accuracy:.4f}")
         
-        # Perform k-fold cross-validation
         print("\nPerforming 5-fold cross-validation...")
         cv_scores = cross_val_score(self.model, self.X_train, self.y_train, cv=5, scoring='accuracy')
         
@@ -318,7 +277,6 @@ class TelecomChurnPredictor:
         print("STEP 5: HYPERPARAMETER OPTIMIZATION")
         print("=" * 60)
         
-        # Define parameter grid
         param_grid = {
             'n_estimators': [100, 200],
             'learning_rate': [0.05, 0.1, 0.15],
@@ -333,7 +291,6 @@ class TelecomChurnPredictor:
         
         print(f"\nTotal combinations to test: {np.prod([len(v) for v in param_grid.values()])}")
         
-        # Perform grid search
         print("Performing GridSearchCV (this may take a while)...")
         grid_search = GridSearchCV(
             GradientBoostingClassifier(random_state=42),
@@ -346,7 +303,6 @@ class TelecomChurnPredictor:
         
         grid_search.fit(self.X_train, self.y_train)
         
-        # Get the best model
         self.best_model = grid_search.best_estimator_
         
         print(f"\nBest parameters: {grid_search.best_params_}")
@@ -360,23 +316,18 @@ class TelecomChurnPredictor:
         print("STEP 6: MODEL EVALUATION")
         print("=" * 60)
         
-        # Make predictions with the best model
         y_pred = self.best_model.predict(self.X_test)
         y_pred_proba = self.best_model.predict_proba(self.X_test)[:, 1]
         
-        # Calculate accuracy
         accuracy = accuracy_score(self.y_test, y_pred)
         print(f"Optimized model accuracy: {accuracy:.4f}")
         
-        # Classification report
         print("\nClassification Report:")
         print(classification_report(self.y_test, y_pred, target_names=['No Churn', 'Churn']))
         
-        # Create evaluation visualizations
         fig, axes = plt.subplots(1, 2, figsize=(15, 6))
         fig.suptitle('Model Evaluation Results', fontsize=16, fontweight='bold')
         
-        # Confusion Matrix
         cm = confusion_matrix(self.y_test, y_pred)
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=axes[0],
                     xticklabels=['No Churn', 'Churn'], yticklabels=['No Churn', 'Churn'])
@@ -384,7 +335,7 @@ class TelecomChurnPredictor:
         axes[0].set_xlabel('Predicted')
         axes[0].set_ylabel('Actual')
         
-        # Feature Importance
+
         feature_importance = pd.DataFrame({
             'feature': self.feature_names,
             'importance': self.best_model.feature_importances_
@@ -399,12 +350,10 @@ class TelecomChurnPredictor:
         plt.close()  # Close figure to free memory
         print("Model evaluation visualizations saved to 'model_evaluation.png'")
         
-        # Print top features
         print("\nTop 10 Most Important Features:")
         for i, (feature, importance) in enumerate(feature_importance.head(10).values, 1):
             print(f"{i:2d}. {feature}: {importance:.4f}")
         
-        # Generate insights
         self.generate_insights(feature_importance)
         
     def generate_insights(self, feature_importance):
@@ -472,7 +421,6 @@ class TelecomChurnPredictor:
             print("Using Gradient Boosting Classifier with comprehensive ML pipeline")
             print("=" * 60)
             
-            # Execute all steps
             self.load_and_preprocess_data(data_path)
             self.exploratory_data_analysis()
             self.prepare_features()
@@ -492,16 +440,10 @@ def main():
     """
     Main function to execute the churn prediction pipeline.
     """
-    # Initialize the predictor
     predictor = TelecomChurnPredictor()
     
-    # Set the data path (modify this to point to your actual dataset)
     data_path = "telco_customer_churn.csv"  # Update with your dataset path
     
-    # You can also set data_path to None to use the built-in sample data
-    # data_path = None
-    
-    # Run the complete pipeline
     predictor.run_complete_pipeline(data_path)
 
 if __name__ == "__main__":
